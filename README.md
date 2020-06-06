@@ -470,7 +470,7 @@ WS: [ \n\r\t]+ -> skip;
 
 - 命令式编程语言，类似没有`structs`的C语言
 - 进一步熟悉左递归的使用
-- 没有语法说明手册，练习从例子中推断规则结构
+- 没有语法说明手册，从例子中推断规则结构
 
 ```cymbol
 // Cymbol test
@@ -482,12 +482,85 @@ int fact(int x) { // factorial function
 ```
 
 
+命令式的重要的组成部分，声明Declaration，语句Statement，表达式Expression。
+
+文件由多个全局声明组成
+
+声明 变量声明和函数声明。由声明格式 + 初始化块组成。变量的初始化块是表达式，函数的初始化是语句块
+
+语句块是由大括号`{}`包裹的任意多个语句，**一个语句块也会被认为是一个语句**。顺便一说，正是因为这个，if else 如果只有一个执行语句的时候可以不加`{}`，多个时要加`{}`, 但逻辑上他们都是一个语句。
+
+通常的语句是: 变量声明(也就是局部变量)，判断，循环，赋值，返回语句，以及，函数调用
+
+表达式是经过计算和查找，最后会返回一个值的一段字符，而语句是没有返回值的执行。根据语句行为定义，语句执行可能需要依赖表达式的值，比如`if`的分支判断
+
+因此表达式可以向语句转化，两种方式:
+1. 通过语句关键字骨架使用表达式。比如`if then else`的条件控制语句，比如`return ;`的返回语句，`= ;`的赋值语句。
+  2. 添加一个分号，比如函数调用。`f(x, y)`是一个表达式，而`f(x, y);`是一个语句。
+
+鉴于表达式的重要地位，表达式的解析就很关键，比如要正确考虑操作符的优先级顺序。函数调用和数组索引 > 一元操作符 > 二元乘除 > 二元加减 > 二元比较 > ...
+
+```g4
+grammar Cymbol;
+
+file: (varDecl | functionDecl)+ ;
+
+varDecl: type ID ('=' expr)? ';' ;
+
+type: 'int' | 'float' | 'void';
+
+functionDecl: type ID '(' formalParameters ')' block;
+
+formalParameters: type ID (',' type ID)*;
+
+block: '{' stat* '}';
+
+stat: block
+    | varDecl
+    | ifstat            // 结构化的语句优先级更高
+    | retstat
+    | assginstat        // 赋值 a = 2;
+    | expr ';'          // 函数调用 f(a+1);
+    ;
+
+ifstat: 'if' expr 'then' stat ('else' stat)?;
+
+retstat: 'return' expr? ';' ;
+
+assginstat: expr '=' expr ';' ;
+
+expr: ID '(' exprList? ')' // 函数调用
+    | ID '[' expr ']'      // 数组索引, 优先级高于一元'-'，-a[0]
+    | '-' ID               // 一元操作符
+    | '!' ID
+    | expr '*' expr        // 四则运算
+    | expr ('+'|'-') expr
+    | expr '==' expr  // 最低优先级
+    | ID
+    | INT
+    | '(' expr ')'   // 括号
+    ;
+
+exprList: expr (',' expr)* ;
 
 
+ID: LETTER(LETTER|DIGIT)*;
+INT: '0' | [1-9] (DIGIT)*;
+
+fragment LETTER: [a-zA-Z_];
+fragment DIGIT: [0-9];
+
+
+COMMENTS: '//' .*? '\r'?'\n' -> skip;
+
+WS: [ \t\r\n]+ -> skip;
+```
 
 ### R
 
-函数式编程语言
+特点：
+
+- 函数式编程语言
 
 
 
