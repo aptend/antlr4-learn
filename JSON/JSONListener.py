@@ -8,6 +8,51 @@ else:
 # This class defines a complete listener for a parse tree produced by JSONParser.
 class JSONListener(ParseTreeListener):
 
+    # Enter a parse tree produced by JSONParser#json.
+    def enterJson(self, ctx:JSONParser.JsonContext):
+        pass
+
+    # Exit a parse tree produced by JSONParser#json.
+    def exitJson(self, ctx:JSONParser.JsonContext):
+        pass
+
+
+    # Enter a parse tree produced by JSONParser#String.
+    def enterString(self, ctx:JSONParser.StringContext):
+        pass
+
+    # Exit a parse tree produced by JSONParser#String.
+    def exitString(self, ctx:JSONParser.StringContext):
+        pass
+
+
+    # Enter a parse tree produced by JSONParser#Atom.
+    def enterAtom(self, ctx:JSONParser.AtomContext):
+        pass
+
+    # Exit a parse tree produced by JSONParser#Atom.
+    def exitAtom(self, ctx:JSONParser.AtomContext):
+        pass
+
+
+    # Enter a parse tree produced by JSONParser#ArrayValue.
+    def enterArrayValue(self, ctx:JSONParser.ArrayValueContext):
+        pass
+
+    # Exit a parse tree produced by JSONParser#ArrayValue.
+    def exitArrayValue(self, ctx:JSONParser.ArrayValueContext):
+        pass
+
+
+    # Enter a parse tree produced by JSONParser#ObjValue.
+    def enterObjValue(self, ctx:JSONParser.ObjValueContext):
+        pass
+
+    # Exit a parse tree produced by JSONParser#ObjValue.
+    def exitObjValue(self, ctx:JSONParser.ObjValueContext):
+        pass
+
+
     # Enter a parse tree produced by JSONParser#AnObj.
     def enterAnObj(self, ctx:JSONParser.AnObjContext):
         pass
@@ -50,33 +95,6 @@ class JSONListener(ParseTreeListener):
 
     # Exit a parse tree produced by JSONParser#pair.
     def exitPair(self, ctx:JSONParser.PairContext):
-        pass
-
-
-    # Enter a parse tree produced by JSONParser#String.
-    def enterString(self, ctx:JSONParser.StringContext):
-        pass
-
-    # Exit a parse tree produced by JSONParser#String.
-    def exitString(self, ctx:JSONParser.StringContext):
-        pass
-
-
-    # Enter a parse tree produced by JSONParser#Atom.
-    def enterAtom(self, ctx:JSONParser.AtomContext):
-        pass
-
-    # Exit a parse tree produced by JSONParser#Atom.
-    def exitAtom(self, ctx:JSONParser.AtomContext):
-        pass
-
-
-    # Enter a parse tree produced by JSONParser#Skip.
-    def enterSkip(self, ctx:JSONParser.SkipContext):
-        pass
-
-    # Exit a parse tree produced by JSONParser#Skip.
-    def exitSkip(self, ctx:JSONParser.SkipContext):
         pass
 
 
