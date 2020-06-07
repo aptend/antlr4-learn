@@ -698,6 +698,7 @@ class CalcWithProps(LExprListener):
 ```
 
 当然Python可以动态修改对象的字段，可以不用额外的字典  
+
 感觉就是树/DAG的遍历，这三个模式参考一下就行了，现在感觉没有很大的分类指导价值，因地制宜想个算法应该最靠谱。
 
 
@@ -719,3 +720,23 @@ def exitRow(self, ctx: CSVParser.RowContext):
         return
     self.table.append(dict(zip(self.hdrs, self.curr_row_fields)))
 ```
+
+
+### Json2Xml
+
+发现之前写的JSON.g4有个警告
+```
+warning(146): ..../JSON.g4:33:0: non-fragment lexer rule NUMBER can match the empty string
+```
+
+就是说Token NUMBER的规则可以匹配空字符串，因为`:`后面紧接着`|`
+```
+NUMBER:
+      | '-'? INT? '.' [0-9]+ EXP? // .3  1.25E7 -4.5 浮点数
+      | '-'? INT EXP // 指数型
+      | '-'? INT ; // 整型
+```
+
+
+在[事件间传递信息](#事件间传递信息)一节，提到的中间结果，在这里是以该节点为根节点时所形成的Xml文本。
+最开始我的想法，在用Templite的逻辑，一次遍历树，在每个节点上直接写入到全局buf中。用栈来维护一些模式信息。
