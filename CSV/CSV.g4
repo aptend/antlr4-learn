@@ -1,14 +1,14 @@
 grammar CSV;
 
-file: hdr row+;
+csvfile: hdr row+;
 
 hdr: row;
 
 row: field (',' field)* '\r'?'\n';
 
-field: STRING
-     | TEXT
-     |
+field: STRING # string
+     | TEXT   # text
+     |        # none
      ;
 TEXT: ~[,\n\r"]+;
 STRING: '"' ('""' | ~'"')* '"';

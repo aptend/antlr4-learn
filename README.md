@@ -1,4 +1,5 @@
 
+# 环境准备
 ## 命令行环境
 1. 下载`antlr-4.8-complete.jar`到`E:\java3rd_lib`
 2. 创建环境变量`CLASSPATH=E:\java3rd_lib\antlr-4.8-complete.jar`
@@ -43,7 +44,7 @@
     ```
 
 
-## 概况
+# 概况
 ```g4
 stat: assign
     | ifstat
@@ -110,6 +111,7 @@ def visitChildren(self, node):
 > - aggregateResult，默认返回childResult
 
 
+# The Book
 ## Tour
 
 ### import
@@ -284,7 +286,7 @@ WS : [ \t\r\n]+ -> skip ; // match 1-or-more whitespace but discard
 
 
 
-## 语言解析实践
+## 语法设计实践
 
 ### CSV
 
@@ -566,13 +568,39 @@ WS: [ \t\r\n]+ -> skip;
 
 > 给不熟悉、缺乏使用经验的语言些Parser，收集材料：准备测试集，查看语言相关的intro和definition； 2. 由上向下、由大到小、由粗到精的探索。
 
-语法上，本质大家都是表达式，包括赋值语句`a <- b <- 1:5`, 判断语句`if (expr) expr (else expr)?`
+
+```r
+➾ x <- seq(1,10,.5)    # x = 1, 1.5, 2, 2.5, 3, 3.5, ..., 10   
+➾ y <- 1:5             # y = 1, 2, 3, 4, 5
+➾ z <- c(9,6,2,10,-4)  # z = 9, 6, 2, 10, -4
+➾ y + z                # add two vectors
+❮ [1] 10 8 5 14 1       # result is 1-dimensional vector
+➾ z[z<5]               # all elements in z < 5
+❮ [1] 2 -4 
+➾ mean(z)              # compute the mean of vector z
+❮ [1] 4.6
+➾ zero <- function() { return(0) }
+➾ zero()
+❮ [1] 0
+```
+
+语法上，本质大家都是表达式，比如赋值语句`a <- b <- 1:5`, a和b都会指向相同的值
+判断语句`if (expr) expr (else expr)?` 也表示分支上的返回值
+
+所以一个R程序，就是由一条条表达式构成的。主要由三种表达式：
+1. 语句statement 表达式
+2. 操作符operator 表达式
+3. 函数相关function-related 表达式
+
+和Cymbol中认为逻辑由语句组成的不同，R直接认为逻辑就由表达式组成的，虽然都是用`{}`组织为逻辑块
+
+剩下的太细节了，就先跳过，有需要再看。
 
 
 
-## 未归类
+## 应用设计模式
 
-
+这部分的内容一部分都放入[概况](#概况)一节，Listener和Visitor，这里主要还是补充一些觉得有用的细节
 
 ### 增加标签
 ```
@@ -646,7 +674,7 @@ class CalcListener(LExprListener):
 > 相比之下visitor就更灵活，因为它本身也可以增加全局字段来辅助
 
 第三种，标记，在语法树上预留位置，储存中间结果。但是如果让ANTLR4真的在语法树上增加字段，类型是个大问题，和上层运行时绑定了，不同目标语言要求的类型可能还不一样。所以这个模式也交给语言层面，自己建立一个`HashMap<节点:中间结果>`就完事儿了。这种视角可以在visitor和listener基础上使用。
-当然Python可以动态修改对象的字段，可以不用额外的字典  
+
 大概这样 
 ```python
 class CalcWithProps(LExprListener):
@@ -669,4 +697,25 @@ class CalcWithProps(LExprListener):
         self.props[ctx] = int(ctx.INT().getText())
 ```
 
-感觉这样一章就是树/DAG的遍历，因地制宜想个算法，这三个模式参考一下就行了，现在感觉没有很大的分类指导价值。
+当然Python可以动态修改对象的字段，可以不用额外的字典  
+感觉就是树/DAG的遍历，这三个模式参考一下就行了，现在感觉没有很大的分类指导价值，因地制宜想个算法应该最靠谱。
+
+
+
+
+## 应用实践
+
+### CSV 表格
+
+header实际上也的实质也是row，但是父规则就是hdr，而正常的row，父规则是csvfile
+
+所以利用这个特点区分hdr，避免为标题栏建立映射
+
+`antlr4-python3-runtime`没有`getParent()`方法，内容存在`RuleContex.parentCtx`字段
+
+```python
+def exitRow(self, ctx: CSVParser.RowContext):
+    if ctx.parentCtx.getRuleIndex() == CSVParser.RULE_hdr:
+        return
+    self.table.append(dict(zip(self.hdrs, self.curr_row_fields)))
+```
