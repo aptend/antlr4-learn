@@ -77,25 +77,25 @@ class MyXmlEmitter(JSONListener):
     def enterAnObj(self, ctx: JSONParser.AnObjContext):
         if self.mode == self.ARRAY:
             self.appendln('<element>')
+            self.indent_lv += 1
         self.mode_push(self.OBJ)
-        self.indent_lv += 1
 
     def exitAnObj(self, ctx: JSONParser.AnObjContext):
-        self.indent_lv -= 1
         self.mode_pop()
         if self.mode == self.ARRAY:
+            self.indent_lv -= 1
             self.appendln('</element>')
 
     def enterAnArray(self, ctx: JSONParser.AnArrayContext):
         if self.mode == self.ARRAY:
             self.appendln('<element>')
+            self.indent_lv += 1
         self.mode_push(self.ARRAY)
-        self.indent_lv += 1
 
     def exitAnArray(self, ctx: JSONParser.AnArrayContext):
         self.mode_pop()
-        self.indent_lv -= 1
         if self.mode == self.ARRAY:
+            self.indent_lv -= 1
             self.appendln('</element>')
 
     def enterEmptyArray(self, ctx: JSONParser.EmptyArrayContext):
