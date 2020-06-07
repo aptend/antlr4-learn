@@ -34,11 +34,13 @@ class MyXmlEmitter(JSONListener):
     NONE = 0
     ARRAY = 1
     OBJ = 2
+    PAIR = 3
 
     def __init__(self):
         self.indent_lv = 0
         self.modes = [0]
         self.buf = []
+        self.inline_close = False
 
     @property
     def indent(self):
@@ -58,60 +60,76 @@ class MyXmlEmitter(JSONListener):
     def append(self, content):
         self.buf.append(self.indent+content)
 
+    def append_inline(self, content):
+        self.buf.append(content)
+
     def appendln(self, content):
-        self.buf.append(self.indent+content+'\n')
+        self.buf.append(self.indent+content)
+        self.buf.append('\n')
+
+    def remove_trailing_newline(self):
+        if self.buf[-1] == '\n':
+            self.buf.pop()
 
     def result(self):
         return ''.join(self.buf)
 
-    # Enter a parse tree produced by JSONParser#AnObj.
     def enterAnObj(self, ctx: JSONParser.AnObjContext):
+        if self.mode == self.ARRAY:
+            self.appendln('<element>')
         self.mode_push(self.OBJ)
+        self.indent_lv += 1
 
-    # Exit a parse tree produced by JSONParser#AnObj.
     def exitAnObj(self, ctx: JSONParser.AnObjContext):
+        self.indent_lv -= 1
         self.mode_pop()
+        if self.mode == self.ARRAY:
+            self.appendln('</element>')
 
-    # Enter a parse tree produced by JSONParser#AnArray.
     def enterAnArray(self, ctx: JSONParser.AnArrayContext):
         if self.mode == self.ARRAY:
             self.appendln('<element>')
-        self.modes.append(self.ARRAY)
+        self.mode_push(self.ARRAY)
         self.indent_lv += 1
 
-    # Exit a parse tree produced by JSONParser#AnArray.
     def exitAnArray(self, ctx: JSONParser.AnArrayContext):
+        self.mode_pop()
         self.indent_lv -= 1
         if self.mode == self.ARRAY:
             self.appendln('</element>')
-        self.mode_pop()
 
     def enterEmptyArray(self, ctx: JSONParser.EmptyArrayContext):
         if self.mode == self.ARRAY:
             self.appendln('<element></element>')
+        else:
+            self.remove_trailing_newline()
+            self.inline_close = True
 
-    # Enter a parse tree produced by JSONParser#pair.
     def enterPair(self, ctx: JSONParser.PairContext):
         self.appendln("<{}>".format(ctx.STRING().getText()[1:-1]))
         self.indent_lv += 1
+        self.mode_push(self.PAIR)
 
-    # Exit a parse tree produced by JSONParser#pair.
     def exitPair(self, ctx: JSONParser.PairContext):
+        close_txt = "</{}>".format(ctx.STRING().getText()[1:-1])
         self.indent_lv -= 1
-        self.appendln("<{}/>".format(ctx.STRING().getText()[1:-1]))
+        if self.inline_close:
+            self.append_inline(close_txt+'\n')
+            self.inline_close = False
+        else:
+            self.appendln(close_txt)
+        self.mode_pop()
 
-    # Exit a parse tree produced by JSONParser#String.
+    def exit_with_atom_text(self, text):
+        if self.mode == self.ARRAY:
+            self.appendln("<element>{}</element>".format(text))
+        else:
+            self.remove_trailing_newline()
+            self.inline_close = True
+            self.append_inline(text)
+
     def exitString(self, ctx: JSONParser.StringContext):
-        text = ctx.getText()[1:-1]
-        if self.mode == self.ARRAY:
-            self.appendln("<element>{}</element>".format(text))
-        else:
-            self.appendln(text)
+        self.exit_with_atom_text(ctx.getText()[1:-1])
 
-    # Exit a parse tree produced by JSONParser#Atom.
     def exitAtom(self, ctx: JSONParser.AtomContext):
-        text = ctx.getText()
-        if self.mode == self.ARRAY:
-            self.appendln("<element>{}</element>".format(text))
-        else:
-            self.appendln(text)
+        self.exit_with_atom_text(ctx.getText())

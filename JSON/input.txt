@@ -7,8 +7,14 @@
             "File",
             "Help\nMenu",
             ["\u0049", 1.3e9],
-            []
+            [],
+            {
+                "x": 0.0,
+                "y": 2.0,
+                "radius": 10.0,
+                "labels": [ "wheel", "version-2" ]
+            }
         ],
-        "x": null
+        "since": null
     }
 }
