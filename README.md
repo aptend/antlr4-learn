@@ -145,6 +145,45 @@ import CommonLexerRules; // includes all rules from CommonLexerRules.g4
 
 转移注释位置的例子 [Java](https://media.pragprog.com/titles/tpantlr2/code/lexmagic/ShiftVarComments.java)
 
+
+```python
+class CommentShifter(CymbolListener):
+    def __init__(self, tokens: BufferedTokenStream):
+        self.tokens = tokens
+        self.rewriter = TokenStreamRewriter.TokenStreamRewriter(tokens)
+
+    def exitVarDecl(self, ctx: Cymbol.VarDeclContext):
+        semi_idx = ctx.stop.tokenIndex  # ctx停止时的Token， ;号，在字符流中的索引
+        # 收集出现在;之后，可见channle中下一个token或EOF之前，在指定隐藏channel中的tokens
+        if (tokens := self.tokens.getHiddenTokensToRight(semi_idx, CymbolLexer.COMMENTS_CHAN)):
+            if (comment := tokens[0]):
+                cmt = comment.text[2:].strip()
+                self.rewriter.insertBeforeToken(ctx.start, f'/* {cmt} */\n')
+                self.rewriter.replaceSingleToken(comment, '\n')
+```
+
+除了Python接口的一些改变外，4.8版本，channel自定义只能单独写文件
+```g4
+// CymbolLexer.g4
+lexer grammar CymbolLexer;
+
+channels { COMMNETS_CHAN, WHITESPACE_CHAN }
+
+...
+```
+
+解析文件则为
+```g4
+// Cymbol.g4
+parser grammar Cymbol;
+
+options {
+    tokenVocab = CymbolLexer;
+}
+
+...
+```
+
 ##  语法设计
 
 ### 自定向下的规则制定

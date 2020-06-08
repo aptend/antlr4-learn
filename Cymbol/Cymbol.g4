@@ -1,53 +1,46 @@
-grammar Cymbol;
+parser grammar Cymbol;
 
-file: (varDecl | functionDecl)+ ;
+options {
+	tokenVocab = CymbolLexer;
+}
 
-varDecl: type ID ('=' expr)? ';' ;
+src: (varDecl | functionDecl)+ ;
 
-type: 'int' | 'float' | 'void';
+varDecl: typeT ID (EQ expr)? SEMICOLON ;
 
-functionDecl: type ID '(' formalParameters ')' block;
+typeT: TINT | TFLOAT | TVOID;
 
-formalParameters: type ID (',' type ID)*;
+functionDecl: typeT ID LPAREN formalParameters RPAREN block;
 
-block: '{' stat* '}';
+formalParameters: typeT ID (COMMA typeT ID)*;
+
+block: LBRACE stat* RBRACE;
 
 stat: block
     | varDecl
     | ifstat            // 结构化的语句优先级更高
     | retstat
     | assginstat        // 赋值 a = 2;
-    | expr ';'          // 函数调用 f(a+1);
+	| expr SEMICOLON          // 函数调用 f(a+1);
     ;
 
-ifstat: 'if' expr 'then' stat ('else' stat)?;
+ifstat: IF expr THEN stat (ELSE stat)?;
 
-retstat: 'return' expr? ';' ;
+retstat: RET expr? SEMICOLON ;
 
-assginstat: expr '=' expr ';' ;
+assginstat: expr EQ expr SEMICOLON ;
 
-expr: ID '(' exprList? ')' // 函数调用
-    | ID '[' expr ']'      // 数组索引, 优先级高于一元'-'，-a[0]
-    | '-' ID               // 一元操作符
-    | '!' ID
-    | expr '*' expr        // 四则运算
-    | expr ('+'|'-') expr
-    | expr '==' expr  // 最低优先级
+expr: ID LPAREN exprList? RPAREN // 函数调用
+    | ID LBRACKET expr RBRACKET      // 数组索引, 优先级高于一元'-'，-a[0]
+    | MINUS ID               // 一元操作符
+    | AHHH ID
+    | expr MULT expr        // 四则运算
+    | expr (PLUS|MINUS) expr
+    | expr DEQ expr  // 最低优先级
     | ID
     | INT
-    | '(' expr ')'   // 括号
+    | LPAREN expr RPAREN   // 括号
     ;
 
-exprList: expr (',' expr)* ;
+exprList: expr (COMMA expr)* ;
 
-
-ID: LETTER(LETTER|DIGIT)*;
-INT: '0' | [1-9] (DIGIT)*;
-
-fragment LETTER: [a-zA-Z_];
-fragment DIGIT: [0-9];
-
-
-COMMENTS: '//' .*? '\r'?'\n' -> skip;
-
-WS: [ \t\r\n]+ -> skip;
