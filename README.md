@@ -712,14 +712,14 @@ header实际上也的实质也是row，但是父规则就是hdr，而正常的ro
 
 所以利用这个特点区分hdr，避免为标题栏建立映射
 
-`antlr4-python3-runtime`没有`getParent()`方法，内容存在`RuleContex.parentCtx`字段
+- `antlr4-python3-runtime`没有`getParent()`方法，内容存在`RuleContex.parentCtx`字段
 
-```python
-def exitRow(self, ctx: CSVParser.RowContext):
-    if ctx.parentCtx.getRuleIndex() == CSVParser.RULE_hdr:
-        return
-    self.table.append(dict(zip(self.hdrs, self.curr_row_fields)))
-```
+    ```python
+    def exitRow(self, ctx: CSVParser.RowContext):
+        if ctx.parentCtx.getRuleIndex() == CSVParser.RULE_hdr:
+            return
+        self.table.append(dict(zip(self.hdrs, self.curr_row_fields)))
+    ```
 
 
 ### Json2Xml
@@ -740,9 +740,11 @@ NUMBER:
 
 在[事件间传递信息](#事件间传递信息)一节，提到的中间结果，在这里是以该节点为根节点时所形成的Xml文本。
 我的想法，在用Templite的逻辑，一次遍历树，在每个节点上直接写入到全局buf中。写入格式用一些全局变量来指定，比如指示标签inline添加，用栈来维护一些模式信息，比如用来区分`ARRAY`模式。
-关于缩进，从语法中可以看到，只有Pair和Array可以承载value，所以这个两个地方才会处理缩进
 
-书本上的解法就是模拟递归法，在遍历的过程中，计算出子问题的结果，存起来，后续再集中使用。和真正的递归不同，每个子数组的中间变量都存在了树上，所以浪费了大量的内存，而真正的递归每个函数退出后内存要么被复用了。
-所以看到字典+listener中只用了`exitXxx`
+书本上的解法就是模拟递归法，在遍历的过程中，计算出子问题的结果，存起来，后续再集中使用, 所以看到字典+listener中只用了`exitXxx`，也就是存递归的结果。和真正的递归不同，每个子数组的中间变量都存在了树上，所以浪费了的内存，而真正的递归每个函数退出后内存要么被复用了要么被回收。
+
+关于缩进，从语法中可以看到，只有Pair和Array可以承载value，可以在这两个地方处理缩进。准确地说，开启一个Pair时，增加缩进，开启一个**嵌套的**array时，增加缩进，在`MyXmlEmitter`中实现。另一种缩进，开启obj和array时增加缩进，在`XmlEmitter`中实现，有个小问题，顶级的无名obj也会存在尴尬的缩进和填充物
+
+- `antlr4-python3-runtime`中Context中的`getText()`默认对所有child调用`getText`，出口是Token的文本
 
 

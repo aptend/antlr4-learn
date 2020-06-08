@@ -133,3 +133,59 @@ class MyXmlEmitter(JSONListener):
 
     def exitAtom(self, ctx: JSONParser.AtomContext):
         self.exit_with_atom_text(ctx.getText())
+
+
+class XmlEmitter(JSONListener):
+    def __init__(self):
+        self._result = None
+        self.indent_lv = 0
+
+    @property
+    def indent(self):
+        return '  ' * self.indent_lv
+
+    def result(self):
+        return self._result
+
+    def exitJson(self, ctx: JSONParser.JsonContext):
+        self._result = ctx.value().ret
+
+    def exitString(self, ctx: JSONParser.StringContext):
+        ctx.ret = ctx.getText()[1:-1]  # 等效于ctx.STRING().getText()
+
+    def exitAtom(self, ctx: JSONParser.AtomContext):
+        ctx.ret = ctx.getText()
+
+    def exitArrayValue(self, ctx: JSONParser.ArrayValueContext):
+        ctx.ret = ctx.array().ret
+
+    def exitObjValue(self, ctx: JSONParser.ObjValueContext):
+        ctx.ret = ctx.obj().ret
+
+    def enterAnObj(self, ctx: JSONParser.AnObjContext):
+        self.indent_lv += 1
+
+    def exitAnObj(self, ctx: JSONParser.AnObjContext):
+        ret = '\n'.join(c.ret for c in ctx.getChildren() if hasattr(c, 'ret'))
+        self.indent_lv -= 1
+        ctx.ret = f"\n{ret}\n{self.indent}"
+
+    def exitEmptyObj(self, ctx: JSONParser.EmptyObjContext):
+        ctx.ret = ''
+
+    def enterAnArray(self, ctx: JSONParser.AnArrayContext):
+        self.indent_lv += 1
+
+    def exitAnArray(self, ctx: JSONParser.AnArrayContext):
+        ret = '\n'.join(f"{self.indent}<element>{c.ret}</element>"
+                        for c in ctx.getChildren() if hasattr(c, 'ret'))
+        self.indent_lv -= 1
+        ctx.ret = f"\n{ret}\n{self.indent}"
+
+    def exitEmptyArray(self, ctx: JSONParser.EmptyArrayContext):
+        ctx.ret = ''
+
+    def exitPair(self, ctx: JSONParser.PairContext):
+        # pair 只管加tag，中间的缩进格式由子节点自己保证
+        tag = ctx.STRING().getText()[1:-1]
+        ctx.ret = f'{self.indent}<{tag}>{ctx.value().ret}</{tag}>'

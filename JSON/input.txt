@@ -15,6 +15,7 @@
                 "labels": [ "wheel", "version-2" ]
             }
         ],
-        "since": null
+        "since": null,
+        "inner_obj": {}
     }
 }
