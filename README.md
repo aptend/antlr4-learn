@@ -140,7 +140,10 @@ import CommonLexerRules; // includes all rules from CommonLexerRules.g4
 
 很像Rust中的过程宏。高效地改造源代码。
 
+配合channel效果更好
+![tWzmuV.png](https://s1.ax1x.com/2020/06/08/tWzmuV.png)
 
+转移注释位置的例子 [Java](https://media.pragprog.com/titles/tpantlr2/code/lexmagic/ShiftVarComments.java)
 
 ##  语法设计
 
@@ -748,3 +751,34 @@ NUMBER:
 - `antlr4-python3-runtime`中Context中的`getText()`默认对所有child调用`getText`，出口是Token的文本
 
 
+## Token 黑魔法
+
+### 关键字作标识符
+
+`if if then call call;` 第二个if是变量，第二个call是参数。推荐的解决方案是把歧义的token优先按照关键字解析，然后把关键字当作标识符的一个备选
+
+```g4
+grammar IDKeyword;
+
+prog: stat+ ;
+
+stat: 'if' expr 'then' stat
+    | 'call' id ';'
+    | ';'
+    ;
+
+expr: id ;
+
+id  :   'if' | 'call' | 'then' | ID ;
+
+ID : [a-z]+ ;
+WS : [ \r\n]+ -> skip ;
+```
+
+
+### 整体和部分的巧合歧义
+
+`a >> 3` 和 `Vec<Vec<i32>>` 中的`>>`含义明显不同，如果词法规则中存在`'>>'`规则，就会导致后者的解析有问题。推荐的解决办法是，不要使用这种整体，就发送两个`>`，让Parser自己靠上下文去判断。当然问题就是`a > > 3`也能被成功解析，这个可以靠Listener或者Visitor去主动检查后抛出错误。
+
+
+### 相同字符序列的场景化解释

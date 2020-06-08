@@ -1,4 +1,4 @@
-grammar test;
+grammar SPL;
 
 pipeline: cmd args=ID '=' '"' ID '"' ('|' pipeline)*;
 

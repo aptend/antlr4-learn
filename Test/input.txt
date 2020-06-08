@@ -1,1 +1,0 @@
-search index="score" | search wula="tim"
