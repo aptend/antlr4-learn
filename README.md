@@ -15,7 +15,7 @@
     grun.bat
     java org.antlr.v4.gui.TestRig %*
     ```
-5. (Optional) 使用[pygrun](https://github.com/jszheng/py3antlr4book/blob/master/bin/pygrun)代替`grun`驱动Lexer和Parser。不过有VS Code的插件后这个基本上不需要了
+5. (Optional) 使用[pygrun](https://github.com/jszheng/py3antlr4book/blob/master/bin/pygrun)代替`grun`驱动Lexer和Parser。VS Code的插件一定程度上可以代替它，但对actions / attributes的支持显得比较麻烦
 
 ## VS Code
 
@@ -817,7 +817,72 @@ WS : [ \r\n]+ -> skip ;
 
 ### 整体和部分的巧合歧义
 
-`a >> 3` 和 `Vec<Vec<i32>>` 中的`>>`含义明显不同，如果词法规则中存在`'>>'`规则，就会导致后者的解析有问题。推荐的解决办法是，不要使用这种整体，就发送两个`>`，让Parser自己靠上下文去判断。当然问题就是`a > > 3`也能被成功解析，这个可以靠Listener或者Visitor去主动检查后抛出错误。
+`a >> 3` 和 `Vec<Vec<i32>>` 中的`>>`含义明显不同，如果词法规则中存在`'>>'`规则，就会导致后者的括号无法闭合。推荐的解决办法是，不要使用整体token，就发送两个`>`，让Parser自己靠上下文去判断。当然问题就是`a > > 3`也能被成功解析，可以靠Listener或者Visitor去主动检查后抛出错误。
 
 
 ### 相同字符序列的场景化解释
+
+在Python的表达式中，括号和中括号中的换行符自动被忽略，不用被Parser感知，如下的列表初始化
+
+```python
+nums = [
+    1,
+    2,4,
+    5
+]
+```
+
+但是平时换行符会作为表达式的分割，需要被发送到Parser
+```python
+a = 1
+b = a + 41
+```
+
+但是换行符也可以因为转义而被忽略
+```
+res = 1 + \
+      2 + \
+      3
+```
+
+总结一下，在不同的场景下，换行符的处理方式不同，有时被捕获为Token，发送给Parser，有时候又直接忽略。所以Lexer需要支持这个行为。解决的一个方法，在Lexer中用一个内置的变量来记录是否进入()或[]
+
+```g4
+lexer grammar SimplePyLexer;
+
+@members {
+    self.nesting = 0
+}
+
+EQ: '=';
+PLUS: '+';
+COMMA: ',';
+
+ID: [a-zA-Z_][a-zA-Z_0-9]*;
+
+INT: [0-9]+;
+
+LPAREN: '(' {self.nesting += 1};
+
+RPAREN: ')' {self.nesting -= 1};
+
+LBRACK: '[' {self.nesting += 1};
+
+RBRACK: ']' {self.nesting -= 1};
+
+/** 在嵌套结构中的换行符被忽略，也就是在()或[]中，必须置于NEWLINE之前处理 */
+IGNORE_NEWLINE: '\r'? '\n' {self.nesting>0}? -> skip;
+
+NEWLINE: '\r'? '\n';
+
+/** 特别注意: 这里直接抛弃了空格符，也就是不处理缩进的代码块，单一作用域的语句执行 */
+WS: [ \t]+ -> skip;
+
+/** 忽略换行转义 */
+LINE_ESCAPE: '\\' '\r'? '\n' -> skip;
+
+/** 处理语句后的注释，注意不能处理换行符，换行符留着给语句分段用 */
+COMMENT: '#' ~[\r\n]* -> skip;
+```
+
+> vscode-antlr4 不支持actions，用js模仿predicates也就是个半成品，头裂开

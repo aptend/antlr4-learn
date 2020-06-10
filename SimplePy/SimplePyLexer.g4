@@ -1,28 +1,27 @@
 lexer grammar SimplePyLexer;
 
 @members {
-    nesting = 0
+    self.nesting = 0
 }
 
 EQ: '=';
 PLUS: '+';
 COMMA: ',';
 
-
-ID:[a-zA-Z_][a-zA-Z_0-9]*;
+ID: [a-zA-Z_][a-zA-Z_0-9]*;
 
 INT: [0-9]+;
 
-LPAREN: '(' {nesting += 1};
+LPAREN: '(' {self.nesting += 1};
 
-RPAREN: ')' {nesting -= 1};
+RPAREN: ')' {self.nesting -= 1};
 
-LBRACK: '[' {nesting += 1};
+LBRACK: '[' {self.nesting += 1};
 
-RBRACK: ']' {nesting -= 1};
+RBRACK: ']' {self.nesting -= 1};
 
-/** 在嵌套结构中的换行符被忽略，也就是在()或[]中 */
-IGNORE_NEWLINE: '\r'? '\n' {nesting>0}? -> skip;
+/** 在嵌套结构中的换行符被忽略，也就是在()或[]中，必须置于NEWLINE之前处理 */
+IGNORE_NEWLINE: '\r'? '\n' {self.nesting>0}? -> skip;
 
 NEWLINE: '\r'? '\n';
 

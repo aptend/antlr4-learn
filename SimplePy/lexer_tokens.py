@@ -10,6 +10,6 @@ if __name__ == '__main__':
 
     lexer = SimplePyLexer(input_stream)
     token_stream = CommonTokenStream(lexer)
-    print(dir(token_stream))
-    print(token_stream.tokens)
-
+    token_stream.fill()
+    for tok in token_stream.tokens:
+        print(tok)
