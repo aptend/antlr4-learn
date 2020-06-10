@@ -24,8 +24,11 @@ search_expr
     : Not search_expr
     | search_expr And? search_expr
     | search_expr Or search_expr
-    | field cmp_op value
-    | value;
+    | field cmp_op wc_value
+    | wc_value;
+
+wc_value: WcUnquotedValue | WcQuotedString;
+wc_field: WcUnquotedValue;
 
 value: UnquotedValue | QuotedString;
 field: UnquotedValue;

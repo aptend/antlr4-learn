@@ -1,2 +1,4 @@
-search repo1="mytest" 
-| replace "one" with "oneClass" in grade | stats avg(math) as 数学平均 by grade | search x<32 or y > 42
+search repo="mytest*" and (year >= 2000 or location = z11*)
+    | replace "one" with "oneClass" in grade
+    | search year > 2015 or location = z12
+    | stats avg(math) as 数学平均 by grade
