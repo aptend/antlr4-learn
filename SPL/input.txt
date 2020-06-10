@@ -1,1 +1,2 @@
-search index="score" | dedup
+search repo1="mytest" 
+| replace "one" with "oneClass" in grade | stats avg(math) as 数学平均 by grade | search x<32 or y > 42
