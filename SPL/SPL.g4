@@ -1,39 +1,52 @@
 grammar SPL;
 
-pipeline: head_search (Vbar cmds)*;
+pipeline: headSearch (Vbar cmd)*;
 
-cmds: replace | stats | search;
+cmd: replace | stats | search;
 
-stats:
-    Stats stats_agg_term (COMMA? stats_agg_term)* (By field+);
+// Stats
+stats: Stats statsAggTermList (By fieldList)?;
 
-stats_agg_term: stats_func LParen field RParen (As field);
+statsAggTerm
+    : statsFunc LParen func_field = field RParen (
+        As as_field = field
+    )?;
 
-stats_func: Avg;
+statsAggTermList: statsAggTerm (COMMA? statsAggTerm)*;
 
-replace: Replace (value With value (In field)?)+;
+statsFunc: Avg | Max | Min;
 
-head_search: Search? (search_expr)*;
+// Replace
+replace: Replace replaceExprList (In fieldList)?;
 
-search: Search (search_expr)*;
+replaceExpr: old_val = wcValue With new_val = wcValue;
 
-search_expr:
-    Not search_expr
-    | search_expr And? search_expr
-    | search_expr Or search_expr
-    | LParen search_expr RParen
-    | field cmp_op wc_value
-    | wc_value;
+replaceExprList: replaceExpr (COMMA? replaceExpr)*;
 
-// wc_value包含value
-wc_value: value | WcUnquotedValue | WcQuotedString;
-// wc_field包含field
-wc_field: field | WcUnquotedValue;
+/// Search
+headSearch: Search? (searchExpr)?;
+
+search: Search (searchExpr)?;
+
+searchExpr
+    : Not searchExpr                            # NotSearch
+    | left = searchExpr And? right = searchExpr # AndSearch
+    | left = searchExpr Or right = searchExpr   # OrSearch
+    | LParen searchExpr RParen                  # ParenSearch
+    | field cmpOp wcValue                       # FieldCmpSearch
+    | wcValue                                   # FullTextSearch;
+
+// wcValue包含value
+wcValue: value | WcUnquotedValue | WcQuotedString;
+// wcField包含field
+wcField: field | WcUnquotedValue;
 
 value: UnquotedValue | QuotedString;
 field: UnquotedValue;
 
-cmp_op: Eq | Le | Lt | Ge | Gt | Neq;
+fieldList: field (COMMA? field)*;
+
+cmpOp: Eq | Le | Lt | Ge | Gt | Neq;
 
 Search: 'search';
 
@@ -42,6 +55,8 @@ Replace: 'replace';
 Stats: 'stats';
 
 Avg: 'avg';
+Max: 'max';
+Min: 'min';
 
 As: 'as';
 By: 'by';
@@ -67,11 +82,10 @@ And: [aA][nN][dD];
 Or: [oO][rR];
 Not: [nN][oO][tT];
 
-// KEYWORDS: Search | Replace | Stats | Avg | With | As | By | In;
-// ID // : KEYWORDS : [\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_.@]* | QuotedString;
+// KEYWORDS: Search | Replace | Stats | Avg | With | As | By | In; ID // : KEYWORDS :
+// [\u4e00-\u9fa5a-zA-Z_][\u4e00-\u9fa5a-zA-Z0-9_.@]* | QuotedString;
 
-// 无通配符优先匹配，在parser中处理
-// 无通配符
+// 无通配符优先匹配，在parser中处理 无通配符
 UnquotedValue: [\u4e00-\u9fa5a-zA-Z0-9_.@]+; // 不含特殊字符，暂时包含数字
 // 可含有通配符
 WcUnquotedValue: [\u4e00-\u9fa5a-zA-Z0-9_.@*]+;

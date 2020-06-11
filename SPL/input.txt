@@ -1,4 +1,3 @@
-search repo="mytest*" and (year >= 2000 or location = z11*)
+search repo="mytest*" and (year >= 2000 or location = z11) or cv
     | replace "one" with "oneClass" in grade
-    | search year > 2015 or location = z12
-    | stats avg(math) as 数学平均 by grade
+    | stats avg(math) as 数学平均, max(math) as 数学最高分 by grade
