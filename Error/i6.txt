@@ -1,0 +1,2 @@
+// 无法识别的token
+class # { int i; }

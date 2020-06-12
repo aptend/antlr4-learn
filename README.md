@@ -885,4 +885,13 @@ LINE_ESCAPE: '\\' '\r'? '\n' -> skip;
 COMMENT: '#' ~[\r\n]* -> skip;
 ```
 
-> vscode-antlr4 不支持actions，用js模仿predicates也就是个半成品，头裂开
+> vscode-antlr4的调试运行不支持actions，用js模仿predicates的实用性感觉不是很强？比如这里的predicates实际时候action搭配使用的。有点可惜
+
+
+## Error Handling
+
+
+> attributes: 书中的\$stat.text报错unknown attributes，改成\$text OK。rule的文本是\$text，token的文本\$Name.text? 前者会遍历组合它所包含的全部token
+
+
+

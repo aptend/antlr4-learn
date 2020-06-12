@@ -1,0 +1,2 @@
+// normal
+class T {  int i; }
