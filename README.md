@@ -893,5 +893,17 @@ COMMENT: '#' ~[\r\n]* -> skip;
 
 > attributes: 书中的\$stat.text报错unknown attributes，改成\$text OK。rule的文本是\$text，token的文本\$Name.text? 前者会遍历组合它所包含的全部token
 
+`Recognzer`维护`_listener`列表  
 
+`Recognzer.getErrorListenerDispatch()`，利用委托通知`_listeners`中的成员  
+
+`Parser`和`Lexer`(都属于`Recognizer`)各自用`notifyErrorListeners`，`notifyListeners`报告错误  
+
+
+`syntaxError(reg, offendingSymbol, line, column, msg: str, e: )`
+  - reg: Recognizer，Parser 或者 Lexer
+  - offendingSymbol: Token，输入流中造成错误的Token对象
+  - line, column: int，出错字符的位置`offendingSymbol.{line, column}` 
+  - msg: str， 上下文补充说明？
+  - e: RecognitionException，异常对象
 
